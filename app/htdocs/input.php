@@ -6,7 +6,6 @@ $genderLists = [
     "男性",
     "女性",
 ];
-
 $organizationLists = [
     "営業部",
     "人事部",
@@ -17,7 +16,6 @@ $organizationLists = [
     "システム開発4部",
     "システム開発5部",
 ];
-
 $postLists = [
     "部長",
     "次長",
@@ -39,10 +37,15 @@ $errorMessage = '';
 $successMessage = '';
 
 //データベース接続
+$username = "udemy_user";
+$password = "udemy_pass";
+$hostname = "db";
+$db = "udemy_db";
+$pdo = new PDO("mysql:host={$hostname};dbname={$db};charset=utf8", $username, $password);
 
-//POST通信、かつ登録ボタン押す
+//POST通信、かつ登録ボタン押下
 if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
-    var_dump($_POST);
+    // var_dump($_POST);
     $id = isset($_POST['id']) ? $_POST['id'] : '';
     $name = isset($_POST['name']) ? $_POST['name'] : '';
     $nameKana = isset($_POST['name_kana']) ? $_POST['name_kana'] : '';
@@ -54,50 +57,174 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
     $tel = isset($_POST['tel']) ? $_POST['tel'] : '';
     $mailAddress = isset($_POST['mail_address']) ? $_POST['mail_address'] : '';
 
-    //POSTされた社員番号の入力チェック
-    //空白ではないか
-    //６桁の数値か
-    //存在しない社員番号か
+    //trueならば登録ボタンが押されたということ
+    $isSave = (isset($_POST['save']) && $_POST['save'] === '1') ? true : false;
 
-    //POSTされた社員名の入力チェック
-    //空白ではないか
-    //50文字以内か
+    if ($isSave === true) {
+        //POSTされた社員番号の入力チェック
+        if ($id === '') { //空白でないか
+            $errorMessage .= '社員番号を入力してください。<br>';
+        } else if (!preg_match('/\A[0-9]{6}\z/', $id)) { //6桁の数値か
+            $errorMessage .= '社員番号は6桁の数値で入力してください。<br>';
+        } else {
+            //存在しない社員番号か
+            $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
+            $param = array("id" => $id);
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($param);
+            $count = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($count['count'] >= 1) {
+                //同一社員番号が存在したらエラー
+                $errorMessage .= '登録済みの社員番号です。<br>';
+            }
+        }
 
-    //POSTされた社員名カナの入力チェック
-    //空白ではないか
-    //50文字以内か
+        //POSTされた社員名の入力チェック
+        if ($name === '') { //空白でないか
+            $errorMessage .= '社員名を入力してください。<br>';
+        } else if (mb_strlen($name) > 50) { //50文字以内か
+            $errorMessage .= '社員名は50文字以内で入力してください。<br>';
+        }
 
-    //POSTされた生年月日の入力チェック
-    //空白ではないか
-    //yyyy/mm/dd形式
-    //存在する日付
+        //POSTされた社員名カナの入力チェック
+        if ($nameKana === '') { //空白でないか
+            $errorMessage .= '社員名カナを入力してください。<br>';
+        } else if (mb_strlen($nameKana) > 50) { //50文字以内か
+            $errorMessage .= '社員名カナは50文字以内で入力してください。<br>';
+        }
 
-    //POSTされた性別の入力チェック
-    //以下のいずれかか
-    //男性、女性
+        //POSTされた生年月日の入力チェック
+        if ($birthday === '') { //空白でないか
+            $errorMessage .= '生年月日を入力してください。<br>';
+        } else {
+            // yyyy/mm/dd形式か
+            if (!preg_match('/\A[0-9]{4}-[0-9]{2}-[0-9]{2}\z/', $birthday)) {
+                $errorMessage .= '生年月日を正しく入力してください。<br>';
+            } else {
+                // 存在する日付か
+                list($year, $month, $day) = explode('-', $birthday);
+                if (!checkdate((int)$month, (int)$day, (int)$year)) {
+                    $errorMessage .= '生年月日を正しく入力してください。<br>';
+                }
+            }
+        }
 
-    //POSTされた部署の入力チェック
+        //POSTされた性別の入力チェック
+        //以下のいずれかか
+        //男性、女性
+        if (!in_array($gender, $genderLists)) {
+            $errorMessage .= '性別を選択してください。<br>';
+        }
 
-    //POSTされた役職の入力チェック
+        //POSTされた部署の入力チェック
+        //以下のいずれかか
+        //営業部、人事部、総務部、システム開発1部、システム開発2部、システム開発3部、
+        //システム開発4部、システム開発5部
+        if (!in_array($organization, $organizationLists)) {
+            $errorMessage .= '部署を選択してください。<br>';
+        }
 
-    //POSTされた入社年月日の入力チェック
+        //POSTされた役職の入力チェック
+        //以下のいずれかか
+        //部長、次長、課長、一般
+        if (!in_array($post, $postLists)) {
+            $errorMessage .= '役職を選択してください。<br>';
+        }
 
-    //POSTされた電話番号の入力チェック
+        //POSTされた入社年月日の入力チェック
+        if ($startDate === '') { //空白でないか
+            $errorMessage .= '入社年月日を入力してください。<br>';
+        } else {
+            //yyyy/mm/dd形式か
+            if (!preg_match('/\A[0-9]{4}-[0-9]{2}-[0-9]{2}\z/', $startDate)) {
+                $errorMessage .= '入社年月日を正しく入力してください。<br>';
+            } else {
+                //存在する日付か
+                list($year, $month, $day) = explode('-', $startDate);
+                if (!checkdate((int)$month, (int)$day, (int)$year)) {
+                    $errorMessage .= '入社年月日を正しく入力してください。<br>';
+                }
+            }
+        }
 
-    //POSTされたメールアドレスの入力チェック
+        //POSTされた電話番号の入力チェック
+        if ($tel === '') { //空白でないか
+            $errorMessage .= '電話番号を入力してください。<br>';
+        } else if (!preg_match('/\A[0-9]{1,15}\z/', $id)) { //15桁以内の数値か
+            $errorMessage .= '電話番号は15桁以内の数値で入力してください。<br>';
+        }
 
-    //入力チェックOK?
+        //POSTされたメールアドレスの入力チェック
+        if ($mailAddress === '') { //空白でないか
+            $errorMessage .= 'メールアドレスを入力してください。<br>';
+        } else if (!preg_match(
+            '/\A([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}\z/iD',
+            $mailAddress
+        )) { //メールアドレス形式か
+            $errorMessage .= 'メールアドレスを正しく入力してください。<br>';
+        }
 
-    //トランザクション開始
+        //入力チェックOK?
+        if ($errorMessage === '') {
+            // echo "エラーなし";
+            //トランザクション開始
+            $pdo->beginTransaction();
 
-    //社員情報登録SQLの発行
+            //社員情報登録SQLの実行
+            $sql  = "INSERT INTO users ( ";
+            $sql .= "  id, ";
+            $sql .= "  name, ";
+            $sql .= "  name_kana, ";
+            $sql .= "  birthday, ";
+            $sql .= "  gender, ";
+            $sql .= "  organization, ";
+            $sql .= "  post, ";
+            $sql .= "  start_date, ";
+            $sql .= "  tel, ";
+            $sql .= "  mail_address, ";
+            $sql .= "  created, ";
+            $sql .= "  updated ";
+            $sql .= ") VALUES (";
+            $sql .= "  :id, ";
+            $sql .= "  :name, ";
+            $sql .= "  :name_kana, ";
+            $sql .= "  :birthday, ";
+            $sql .= "  :gender, ";
+            $sql .= "  :organization, ";;
+            $sql .= "  :post, ";
+            $sql .= "  :start_date, ";
+            $sql .= "  :tel, ";
+            $sql .= "  :mail_address, ";
+            $sql .= "  NOW(), "; //作成日時
+            $sql .= "  NOW() ";  //更新日時
+            $sql .= ")";
+            $param = array(
+                "id" => $id,
+                "name" => $name,
+                "name_kana" => $nameKana,
+                "birthday" => $birthday,
+                "gender" => $gender,
+                "organization" => $organization,
+                "post" => $post,
+                "start_date" => $startDate,
+                "tel" => $tel,
+                "mail_address" => $mailAddress,
+            );
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($param);
 
-    //コミット
+            //コミット
+            $pdo->commit();
+
+            $successMessage = "登録完了しました。";
+            } else {
+                // エラー有り
+                echo $errorMessage;
+        }
+    }
 }
 
-
 ?>
-
 <!DOCTYPE html>
 <html>
 
@@ -141,6 +268,14 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                     ?>
                     <?php //例)登録完了しました。
                     ?>
+                    <?php if ($errorMessage !== '') { ?>
+                        <p class="error_message"><?php echo $errorMessage; ?></p>
+                    <?php } ?>
+                    <?php //例)削除完了しました。
+                    ?>
+                    <?php if ($successMessage !== '') { ?>
+                        <p class="success_message"><?php echo $successMessage; ?></p>
+                    <?php } ?>
 
                     <?php //各入力項目表示
                     ?>
@@ -165,9 +300,9 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                             <tr>
                                 <td>性別</td>
                                 <td>
-                                    <?php foreach ($genderLists as $key => $value) { ?>
-                                        <input type="radio" name="gender" value="<?php echo $value ?>" <?php echo $gender === $value ? "checked" : ""; ?>>
-                                        <?php echo $value ?>
+                                    <?php foreach ($genderLists as $value) { ?>
+                                        <input type="radio" name="gender" value="<?php echo $value; ?>" <?php echo $gender === $value ? "checked" : ""; ?>>
+                                        <?php echo $value; ?>
                                     <?php } ?>
                                 </td>
                             </tr>
@@ -175,10 +310,9 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                                 <td>部署</td>
                                 <td>
                                     <select name="organization">
-                                        <?php foreach ($organizationLists as $key => $value) { ?>
-                                            <option value="<?php echo $value ?>" <?php echo $organization === $value ? "selected" : ""; ?>>
-                                                <?php echo $value ?>
-                                            </option>
+                                        <?php foreach ($organizationLists as $value) { ?>
+                                            <option value="<?php echo $value; ?>" <?php echo $organization === $value ? "selected" : ""; ?>>
+                                                <?php echo $value; ?></option>
                                         <?php } ?>
                                     </select>
                                 </td>
@@ -187,9 +321,9 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                                 <td>役職</td>
                                 <td>
                                     <select name="post">
-                                        <?php foreach ($postLists as $key => $value) { ?>
-                                            <option value="<?php echo $value ?>" <?php echo $post === $value ? "selected" : ""; ?>>
-                                                <?php echo $value ?></option>
+                                        <?php foreach ($postLists as $value) { ?>
+                                            <option value="<?php echo $value; ?>" <?php echo $post === $value ? "selected" : ""; ?>>
+                                                <?php echo $value; ?></option>
                                         <?php } ?>
                                     </select>
                                 </td>
