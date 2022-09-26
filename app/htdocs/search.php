@@ -160,17 +160,21 @@ $stmt->execute($param);
                 </form>
             </div>
 
-            <?php //メッセージ表示 ?>
-            <?php //例)社員番号が不正です ?>
+            <?php //メッセージ表示
+            ?>
+            <?php //例)社員番号が不正です
+            ?>
             <?php if ($errorMessage !== '') { ?>
                 <p class="error_message"><?php echo $errorMessage; ?></p>
             <?php } ?>
-            <?php //例)削除完了しました。?>
+            <?php //例)削除完了しました。
+            ?>
             <?php if ($successMessage !== '') { ?>
                 <p class="success_message"><?php echo $successMessage; ?></p>
             <?php } ?>
 
-            <?php //件数表示 ?>
+            <?php //件数表示
+            ?>
             <div id="page_area">
                 <div id="page_count"><?php echo htmlspecialchars($count["count"]); ?>件ヒットしました</div>
             </div>
@@ -208,7 +212,9 @@ $stmt->execute($param);
                                     <td><?php echo htmlspecialchars($row["tel"]); ?></td>
                                     <td><?php echo htmlspecialchars($row["mail_address"]); ?></td>
                                     <td class="button_area">
-                                        <button class="edit_button">編集</button>
+                                        <button class="edit_button" onclick="editUser('<?php echo htmlspecialchars($row["id"]); ?>');">
+                                            編集
+                                        </button>
                                         <button class="delete_button" onclick="deleteUser('<?php echo htmlspecialchars($row["id"]); ?>');">
                                             削除
                                         </button>
@@ -222,12 +228,22 @@ $stmt->execute($param);
         </div>
     </div>
 
+    <form action="input.php" name="edit_form" method="POST">
+        <input type="hidden" name="id" value="" />
+        <input type="hidden" name="delete" value="1" />
+    </form>
+
     <form action="search.php" name="delete_form" method="POST">
         <input type="hidden" name="id" value="" />
         <input type="hidden" name="delete" value="1" />
     </form>
 
     <script>
+        function editUser(id) {
+            document.edit_form.id.value = id;
+            document.edit_form.submit();
+        }
+
         //javascriptでform内のhidden項目[id]に社員番号をセットしてsubmitする
         function deleteUser(id) {
             //削除確認ダイアログ表示

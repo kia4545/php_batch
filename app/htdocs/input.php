@@ -60,6 +60,16 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
     //trueならば登録ボタンが押されたということ
     $isSave = (isset($_POST['save']) && $_POST['save'] === '1') ? true : false;
 
+    //社員検索ボタンの編集ボタン押す
+    //POSTされた社員番号の入力チェック
+    //空白ではないか
+    //6桁の数値か
+    //存在する社員番号か
+    //入力チェックOK?
+    //社員情報取得SQLの実行
+    //エラー画面表示
+
+
     if ($isSave === true) {
         //POSTされた社員番号の入力チェック
         if ($id === '') { //空白でないか
@@ -67,7 +77,8 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
         } else if (!preg_match('/\A[0-9]{6}\z/', $id)) { //6桁の数値か
             $errorMessage .= '社員番号は6桁の数値で入力してください。<br>';
         } else {
-            //存在しない社員番号か
+            //(新規登録時)存在しない社員番号か
+            //(更新時)存在する社員番号か
             $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
             $param = array("id" => $id);
             $stmt = $pdo->prepare($sql);
@@ -170,6 +181,8 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             //トランザクション開始
             $pdo->beginTransaction();
 
+            //新規登録か?
+
             //社員情報登録SQLの実行
             $sql  = "INSERT INTO users ( ";
             $sql .= "  id, ";
@@ -213,13 +226,15 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($param);
 
+            //社員情報更新SQLの実行
+
             //コミット
             $pdo->commit();
 
             $successMessage = "登録完了しました。";
-            } else {
-                // エラー有り
-                echo $errorMessage;
+        } else {
+            // エラー有り
+            echo $errorMessage;
         }
     }
 }
@@ -283,6 +298,8 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                         <tbody>
                             <tr>
                                 <td>社員番号</td>
+                                <?php //(新規登録時)社員番号入力可 ?>
+                                <?php //(更新時)社員番号入力不可 ?>
                                 <td><input type="text" name="id" value="<?php echo htmlspecialchars($id); ?>" /></td>
                             </tr>
                             <tr>
