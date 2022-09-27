@@ -162,7 +162,7 @@ $stmt->execute($param);
 
             <?php //メッセージ表示
             ?>
-            <?php //例)社員番号が不正です
+            <?php //例)社員番号が不正です。
             ?>
             <?php if ($errorMessage !== '') { ?>
                 <p class="error_message"><?php echo $errorMessage; ?></p>
@@ -230,7 +230,7 @@ $stmt->execute($param);
 
     <form action="input.php" name="edit_form" method="POST">
         <input type="hidden" name="id" value="" />
-        <input type="hidden" name="delete" value="1" />
+        <input type="hidden" name="edit" value="1" />
     </form>
 
     <form action="search.php" name="delete_form" method="POST">

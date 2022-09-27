@@ -35,6 +35,8 @@ $tel = '';
 $mailAddress = '';
 $errorMessage = '';
 $successMessage = '';
+$isEdit = false;
+$isSave = false;
 
 //データベース接続
 $username = "udemy_user";
@@ -43,7 +45,7 @@ $hostname = "db";
 $db = "udemy_db";
 $pdo = new PDO("mysql:host={$hostname};dbname={$db};charset=utf8", $username, $password);
 
-//POST通信、かつ登録ボタン押下
+//POST通信
 if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
     // var_dump($_POST);
     $id = isset($_POST['id']) ? $_POST['id'] : '';
@@ -60,16 +62,86 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
     //trueならば登録ボタンが押されたということ
     $isSave = (isset($_POST['save']) && $_POST['save'] === '1') ? true : false;
 
-    //社員検索ボタンの編集ボタン押す
-    //POSTされた社員番号の入力チェック
-    //空白ではないか
-    //6桁の数値か
-    //存在する社員番号か
-    //入力チェックOK?
-    //社員情報取得SQLの実行
-    //エラー画面表示
+    //trueならば既存データの更新ということ
+    $isEdit = (isset($_POST['edit']) && $_POST['edit'] === '1') ? true : false;
 
+    //社員検索画面の編集ボタン押下
+    if ($isEdit === true && $isSave === false) {
+        //POSTされた社員番号の入力チェック
+        if ($id === '') { //空白でないか
+            $errorMessage .= 'エラーが発生しました。もう一度やり直してください。<br>';
+        } else if (!preg_match('/\A[0-9]{6}\z/', $id)) { //6桁の数値か
+            $errorMessage .= 'エラーが発生しました。もう一度やり直してください。<br>';
+        } else {
+            //存在する社員番号か
+            $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
+            $param = array("id" => $id);
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($param);
+            $count = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($count['count'] === '0') {
+                $errorMessage .= 'エラーが発生しました。もう一度やり直してください。<br>';
+            }
+        }
 
+        //入力チェックOK?
+        if ($errorMessage === '') {
+            //社員情報取得SQLの実行
+            $sql = "SELECT * FROM users WHERE id = :id";
+            $param = array('id' => $id);
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($param);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $id = $user['id'];
+            $name = $user['name'];
+            $nameKana = $user['name_kana'];
+            $birthday = $user['birthday'];
+            $gender = $user['gender'];
+            $organization = $user['organization'];
+            $post = $user['post'];
+            $startDate = $user['start_date'];
+            $tel = $user['tel'];
+            $mailAddress = $user['mail_address'];
+        } else {
+            //エラー画面表示
+?>
+            <!DOCTYPE html>
+            <html>
+
+            <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                <title>エラー</title>
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <link rel="stylesheet" type="text/css" href="/css/style.css" />
+            </head>
+
+            <body>
+
+                <div id="header">
+                    <h1>社員管理システム</h1>
+                </div>
+
+                <div class="clearfix">
+                    <div id="menu">
+                        <h3>メニュー</h3>
+                        <div class="sub_menu"><a href="./search.php">社員検索</a></div>
+                        <div class="sub_menu"><a href="./input.php">社員登録</a></div>
+                    </div>
+
+                    <div id="main">
+                        <div class="error_message"><?php echo $errorMessage; ?></div>
+                    </div>
+                </div>
+            </body>
+
+            </html>
+<?php
+            exit; //処理終了
+        }
+    }
+
+    //登録ボタン押下
     if ($isSave === true) {
         //POSTされた社員番号の入力チェック
         if ($id === '') { //空白でないか
@@ -84,9 +156,12 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($param);
             $count = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($count['count'] >= 1) {
-                //同一社員番号が存在したらエラー
+            if ($isEdit === false && $count['count'] >= 1) {
+                //新規登録時に同一社員番号が存在したらエラー
                 $errorMessage .= '登録済みの社員番号です。<br>';
+            } else if ($isEdit === true && $count['count'] === "0") {
+                //更新時に同一社員番号が存在しなかったらエラー
+                $errorMessage .= '存在しない社員番号です。<br>';
             }
         }
 
@@ -161,7 +236,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
         //POSTされた電話番号の入力チェック
         if ($tel === '') { //空白でないか
             $errorMessage .= '電話番号を入力してください。<br>';
-        } else if (!preg_match('/\A[0-9]{1,15}\z/', $id)) { //15桁以内の数値か
+        } else if (!preg_match('/\A[0-9]{1,15}\z/', $tel)) { //15桁以内の数値か
             $errorMessage .= '電話番号は15桁以内の数値で入力してください。<br>';
         }
 
@@ -181,36 +256,53 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             //トランザクション開始
             $pdo->beginTransaction();
 
-            //新規登録か?
-
-            //社員情報登録SQLの実行
-            $sql  = "INSERT INTO users ( ";
-            $sql .= "  id, ";
-            $sql .= "  name, ";
-            $sql .= "  name_kana, ";
-            $sql .= "  birthday, ";
-            $sql .= "  gender, ";
-            $sql .= "  organization, ";
-            $sql .= "  post, ";
-            $sql .= "  start_date, ";
-            $sql .= "  tel, ";
-            $sql .= "  mail_address, ";
-            $sql .= "  created, ";
-            $sql .= "  updated ";
-            $sql .= ") VALUES (";
-            $sql .= "  :id, ";
-            $sql .= "  :name, ";
-            $sql .= "  :name_kana, ";
-            $sql .= "  :birthday, ";
-            $sql .= "  :gender, ";
-            $sql .= "  :organization, ";;
-            $sql .= "  :post, ";
-            $sql .= "  :start_date, ";
-            $sql .= "  :tel, ";
-            $sql .= "  :mail_address, ";
-            $sql .= "  NOW(), "; //作成日時
-            $sql .= "  NOW() ";  //更新日時
-            $sql .= ")";
+            //新規登録?
+            if ($isEdit === false) {
+                //新規登録
+                //社員情報登録SQLの実行
+                $sql  = "INSERT INTO users ( ";
+                $sql .= "  id, ";
+                $sql .= "  name, ";
+                $sql .= "  name_kana, ";
+                $sql .= "  birthday, ";
+                $sql .= "  gender, ";
+                $sql .= "  organization, ";
+                $sql .= "  post, ";
+                $sql .= "  start_date, ";
+                $sql .= "  tel, ";
+                $sql .= "  mail_address, ";
+                $sql .= "  created, ";
+                $sql .= "  updated ";
+                $sql .= ") VALUES (";
+                $sql .= "  :id, ";
+                $sql .= "  :name, ";
+                $sql .= "  :name_kana, ";
+                $sql .= "  :birthday, ";
+                $sql .= "  :gender, ";
+                $sql .= "  :organization, ";;
+                $sql .= "  :post, ";
+                $sql .= "  :start_date, ";
+                $sql .= "  :tel, ";
+                $sql .= "  :mail_address, ";
+                $sql .= "  NOW(), "; //作成日時
+                $sql .= "  NOW() ";  //更新日時
+                $sql .= ")";
+            } else {
+                //更新
+                //社員情報更新SQLの実行
+                $sql  = "UPDATE users ";
+                $sql .= "SET name = :name, ";
+                $sql .= "  name_kana = :name_kana, ";
+                $sql .= "  birthday = :birthday, ";
+                $sql .= "  gender = :gender, ";
+                $sql .= "  organization = :organization, ";
+                $sql .= "  post = :post, ";
+                $sql .= "  start_date = :start_date, ";
+                $sql .= "  tel = :tel, ";
+                $sql .= "  mail_address = :mail_address, ";
+                $sql .= "  updated = NOW() "; //更新日時
+                $sql .= "WHERE id = :id ";
+            }
             $param = array(
                 "id" => $id,
                 "name" => $name,
@@ -226,15 +318,14 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($param);
 
-            //社員情報更新SQLの実行
-
             //コミット
             $pdo->commit();
 
             $successMessage = "登録完了しました。";
-        } else {
-            // エラー有り
-            echo $errorMessage;
+            $isEdit = true;
+            // } else {
+            //     // エラー有り
+            //     echo $errorMessage;
         }
     }
 }
@@ -298,9 +389,18 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                         <tbody>
                             <tr>
                                 <td>社員番号</td>
-                                <?php //(新規登録時)社員番号入力可 ?>
-                                <?php //(更新時)社員番号入力不可 ?>
-                                <td><input type="text" name="id" value="<?php echo htmlspecialchars($id); ?>" /></td>
+                                <?php //(新規登録時)社員番号入力可
+                                ?>
+                                <?php //(更新時)社員番号入力不可
+                                ?>
+                                <td>
+                                    <?php if ($isEdit === false) { ?>
+                                        <input type="text" name="id" value="<?php echo htmlspecialchars($id); ?>"/>
+                                    <?php } else { ?>
+                                        <input type="text" name="id" value="<?php echo htmlspecialchars($id); ?>" disabled/>
+                                        <input type="hidden" name="id" value="<?php echo htmlspecialchars($id); ?>" />
+                                    <?php } ?>
+                                </td>
                             </tr>
                             <tr>
                                 <td>社員名</td>
@@ -362,6 +462,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                     <div class="clearfix">
                         <div class="input_area_right">
                             <input type="hidden" name="save" value="1" />
+                            <input type="hidden" name="edit" value="<?php echo $isEdit === true ? "1" : ""; ?>" />
                             <input type="submit" id="input_button" value="登録">
                             <input type="button" id="back_button" value="戻る" onclick="location.href='search.php'; return false;">
                         </div>
