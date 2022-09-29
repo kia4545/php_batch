@@ -47,7 +47,6 @@ $pdo = new PDO("mysql:host={$hostname};dbname={$db};charset=utf8", $username, $p
 
 //POST通信
 if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
-    // var_dump($_POST);
     $id = isset($_POST['id']) ? $_POST['id'] : '';
     $name = isset($_POST['name']) ? $_POST['name'] : '';
     $nameKana = isset($_POST['name_kana']) ? $_POST['name_kana'] : '';
@@ -323,9 +322,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
 
             $successMessage = "登録完了しました。";
             $isEdit = true;
-            // } else {
-            //     // エラー有り
-            //     echo $errorMessage;
+
         }
     }
 }
@@ -360,39 +357,17 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             <div id="input_area">
                 <form action="input.php" method="POST">
                     <p><strong>社員情報を入力してください。全て必須です。</strong></p>
-                    <?php //メッセージ表示
-                    ?>
-                    <?php //例)社員名を入力してください。
-                    ?>
-                    <?php //例)社員名は50文字以内で入力してください。
-                    ?>
-                    <?php //例)生年月日を正しく入力してください。
-                    ?>
-                    <?php //例)性別を選択してください。
-                    ?>
-                    <?php //例)XXXXXを入力してください。
-                    ?>
-                    <?php //例)登録完了しました。
-                    ?>
                     <?php if ($errorMessage !== '') { ?>
                         <p class="error_message"><?php echo $errorMessage; ?></p>
                     <?php } ?>
-                    <?php //例)削除完了しました。
-                    ?>
                     <?php if ($successMessage !== '') { ?>
                         <p class="success_message"><?php echo $successMessage; ?></p>
                     <?php } ?>
 
-                    <?php //各入力項目表示
-                    ?>
                     <table>
                         <tbody>
                             <tr>
                                 <td>社員番号</td>
-                                <?php //(新規登録時)社員番号入力可
-                                ?>
-                                <?php //(更新時)社員番号入力不可
-                                ?>
                                 <td>
                                     <?php if ($isEdit === false) { ?>
                                         <input type="text" name="id" value="<?php echo htmlspecialchars($id); ?>"/>
