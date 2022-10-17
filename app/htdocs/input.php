@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once(dirname(__DIR__) . "/config/config.php");
 require_once(dirname(__DIR__) . "/htdocs/library/validate.php");
+require_once(dirname(__DIR__) . "/htdocs/library/database.php");
 
 $id = '';
 $name = '';
@@ -20,13 +21,6 @@ $successMessage = '';
 $isEdit = false;
 $isSave = false;
 
-
-//データベース接続
-$pdo = new PDO(
-    "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8",
-    DB_USER,
-    DB_PASS
-);
 
 //POST通信
 if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
@@ -58,9 +52,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             //存在する社員番号か
             $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
             $param = array("id" => $id);
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($param);
-            $count = $stmt->fetch(PDO::FETCH_ASSOC);
+            $count = DataBase::fetch($sql, $param);
             if ($count['count'] === '0') {
                 $errorMessage .= 'エラーが発生しました。もう一度やり直してください。<br>';
             }
@@ -71,9 +63,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             //社員情報取得SQLの実行
             $sql = "SELECT * FROM users WHERE id = :id";
             $param = array('id' => $id);
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($param);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $user = DataBase::fetch($sql, $param);
 
             $id = $user['id'];
             $name = $user['name'];
@@ -105,9 +95,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             //(更新時)存在する社員番号か
             $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
             $param = array("id" => $id);
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($param);
-            $count = $stmt->fetch(PDO::FETCH_ASSOC);
+            $count = DataBase::fetch($sql, $param);
             if ($isEdit === false && $count['count'] >= 1) {
                 //新規登録時に同一社員番号が存在したらエラー
                 $errorMessage .= '登録済みの社員番号です。<br>';
@@ -186,7 +174,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
         if ($errorMessage === '') {
             // echo "エラーなし";
             //トランザクション開始
-            $pdo->beginTransaction();
+            DataBase::beginTransaction();
 
             //新規登録?
             if ($isEdit === false) {
@@ -247,11 +235,10 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
                 "tel" => $tel,
                 "mail_address" => $mailAddress,
             );
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($param);
+            DataBase::execute($sql, $param);
 
             //コミット
-            $pdo->commit();
+            DataBase::commit();
 
             $successMessage = "登録完了しました。";
             $isEdit = true;

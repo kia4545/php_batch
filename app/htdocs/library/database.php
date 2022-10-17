@@ -26,7 +26,7 @@ class DataBase
     }
 
     /**
-     * トランザクション
+     * トランザクション開始
      *
      * @param なし
      * @return なし
@@ -71,17 +71,46 @@ class DataBase
 
     /**
      * SQLを実行して結果を取得する
+     * (結果が1行の場合はこちらを使用)
      *
-     *
+     * @param string $sql 実行SQL
+     * @param array $param 実行SQLに渡すパラメータ
+     * @return array SQL実行結果配列
      */
+    public static function fetch(string $sql, array $param = []): array
+    {
+        $stmt = self::getInstance()->prepare($sql);
+        $stmt->execute($param);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * SQLを実行して結果を取得する
+     * (結果が2行の場合はこちらを使用)
+     *
+     * @param string $sql 実行SQL
+     * @param array $param 実行SQLに渡すパラメータ
+     * @return array SQL実行結果配列
+     */
+    public static function fetchAll(string $sql, array $param = []): array
+    {
+        $stmt = self::getInstance()->prepare($sql);
+        $stmt->execute($param);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * SQLを実行する
+     *
+     * @param string $sql 実行SQL
+     * @param array $param 実行SQLに渡すパラメータ
+     * @return bool SQL実行結果
+     */
+    public static function execute(string $sql, array $param = []): bool
+    {
+        $stmt = self::getInstance()->prepare($sql);
+        return $stmt->execute($param);
+    }
 }
-
-
-
-
-
-
-
-
 
 ?>
