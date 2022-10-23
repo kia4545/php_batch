@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once(dirname(__DIR__) . "/config/config.php");
 require_once(dirname(__DIR__) . "/htdocs/library/validate.php");
 require_once(dirname(__DIR__) . "/htdocs/library/database.php");
+require_once(dirname(__DIR__) . "/htdocs/library/users.php");
 
 
 $id = '';
@@ -34,7 +35,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
             $param = array("id" => $deleteId);
             $count = DataBase::fetch($sql, $param);
-            if ($count['count'] === '0') {
+            if (!Users::isExists($deleteId)) {
                 $errorMessage .= '社員番号が不正です。<br>';
             }
         }
@@ -45,9 +46,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             DataBase::beginTransaction();
 
             //社員情報の削除
-            $sql = "DELETE FROM users WHERE id = :id";
-            $param = array("id" => $deleteId);
-            DataBase::execute($sql, $param);
+            Users::deleteById($deleteId);
 
             //コミット
             DataBase::commit();
@@ -61,39 +60,17 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
 }
 
 $param = [];
-// 検索条件が指定されている
-if (isset($_GET['id']) && isset($_GET['name_kana'])) {
-    $id = $_GET['id'];
-    $nameKana = $_GET['name_kana'];
-    $gender = isset($_GET['gender']) ? $_GET['gender'] : '';
 
-    // 社員番号が入力されている
-    if ($id !== '') {
-        // 検索条件に社員番号を追加
-        $whereSql .= 'AND id = :id ';
-        $param['id'] = $id;
-    }
-    // 社員名カナが入力されている
-    if ($nameKana !== '') {
-        // 検索条件に社員名カナを追加
-        $whereSql .= 'AND name_kana LIKE :name_kana ';
-        $param['name_kana'] = $nameKana . '%';
-    }
-    // 性別が入力されている
-    if ($gender !== '') {
-        // 検索条件に性別を追加
-        $whereSql .= 'AND gender = :gender ';
-        $param['gender'] = $gender;
-    }
-}
+$id = isset($_GET['id']) ? $_GET['id'] : "";
+$nameKana = isset($_GET['name_kana']) ? $_GET['name_kana'] : "";
+$gender = isset($_GET['gender']) ? $_GET['gender'] : "";
+
 
 //件数取得SQLの実行
-$sql = "SELECT COUNT(*) AS count FROM users WHERE 1 = 1 {$whereSql}";
-$count = DataBase::fetch($sql, $param);
+$count = Users::searchCount($id, $nameKana, $gender);
 
 //社員情報取得SQLの実行
-$sql = "SELECT * FROM users WHERE 1 = 1 {$whereSql} ORDER BY id";
-$data = DataBase::fetchAll($sql, $param);
+$data = Users::searchData($id, $nameKana, $gender);
 
 $title = '社員検索';
 require_once(dirname(__DIR__) . "/template/search.php");

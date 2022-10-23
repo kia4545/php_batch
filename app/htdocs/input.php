@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once(dirname(__DIR__) . "/config/config.php");
 require_once(dirname(__DIR__) . "/htdocs/library/validate.php");
 require_once(dirname(__DIR__) . "/htdocs/library/database.php");
+require_once(dirname(__DIR__) . "/htdocs/library/users.php");
 
 $id = '';
 $name = '';
@@ -50,10 +51,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             $errorMessage .= 'エラーが発生しました。もう一度やり直してください。<br>';
         } else {
             //存在する社員番号か
-            $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
-            $param = array("id" => $id);
-            $count = DataBase::fetch($sql, $param);
-            if ($count['count'] === '0') {
+            if (!Users::isExists($id)) {
                 $errorMessage .= 'エラーが発生しました。もう一度やり直してください。<br>';
             }
         }
@@ -61,9 +59,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
         //入力チェックOK?
         if ($errorMessage === '') {
             //社員情報取得SQLの実行
-            $sql = "SELECT * FROM users WHERE id = :id";
-            $param = array('id' => $id);
-            $user = DataBase::fetch($sql, $param);
+            $user = Users::getById($id);
 
             $id = $user['id'];
             $name = $user['name'];
@@ -93,13 +89,11 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
         } else {
             //(新規登録時)存在しない社員番号か
             //(更新時)存在する社員番号か
-            $sql = "SELECT COUNT(*) AS count FROM users WHERE id = :id";
-            $param = array("id" => $id);
-            $count = DataBase::fetch($sql, $param);
-            if ($isEdit === false && $count['count'] >= 1) {
+            $exists = Users::isExists($id);
+            if ($isEdit === false && $exists) {
                 //新規登録時に同一社員番号が存在したらエラー
                 $errorMessage .= '登録済みの社員番号です。<br>';
-            } else if ($isEdit === true && $count['count'] === "0") {
+            } else if ($isEdit === true && !$exists) {
                 //更新時に同一社員番号が存在しなかったらエラー
                 $errorMessage .= '存在しない社員番号です。<br>';
             }
@@ -180,62 +174,34 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
             if ($isEdit === false) {
                 //新規登録
                 //社員情報登録SQLの実行
-                $sql  = "INSERT INTO users ( ";
-                $sql .= "  id, ";
-                $sql .= "  name, ";
-                $sql .= "  name_kana, ";
-                $sql .= "  birthday, ";
-                $sql .= "  gender, ";
-                $sql .= "  organization, ";
-                $sql .= "  post, ";
-                $sql .= "  start_date, ";
-                $sql .= "  tel, ";
-                $sql .= "  mail_address, ";
-                $sql .= "  created, ";
-                $sql .= "  updated ";
-                $sql .= ") VALUES (";
-                $sql .= "  :id, ";
-                $sql .= "  :name, ";
-                $sql .= "  :name_kana, ";
-                $sql .= "  :birthday, ";
-                $sql .= "  :gender, ";
-                $sql .= "  :organization, ";;
-                $sql .= "  :post, ";
-                $sql .= "  :start_date, ";
-                $sql .= "  :tel, ";
-                $sql .= "  :mail_address, ";
-                $sql .= "  NOW(), "; //作成日時
-                $sql .= "  NOW() ";  //更新日時
-                $sql .= ")";
+                Users::insert(
+                    $id,
+                    $name,
+                    $nameKana,
+                    $birthday,
+                    $gender,
+                    $organization,
+                    $post,
+                    $startDate,
+                    $tel,
+                    $mailAddress
+                );
             } else {
                 //更新
                 //社員情報更新SQLの実行
-                $sql  = "UPDATE users ";
-                $sql .= "SET name = :name, ";
-                $sql .= "  name_kana = :name_kana, ";
-                $sql .= "  birthday = :birthday, ";
-                $sql .= "  gender = :gender, ";
-                $sql .= "  organization = :organization, ";
-                $sql .= "  post = :post, ";
-                $sql .= "  start_date = :start_date, ";
-                $sql .= "  tel = :tel, ";
-                $sql .= "  mail_address = :mail_address, ";
-                $sql .= "  updated = NOW() "; //更新日時
-                $sql .= "WHERE id = :id ";
+                Users::update(
+                    $id,
+                    $name,
+                    $nameKana,
+                    $birthday,
+                    $gender,
+                    $organization,
+                    $post,
+                    $startDate,
+                    $tel,
+                    $mailAddress
+                );
             }
-            $param = array(
-                "id" => $id,
-                "name" => $name,
-                "name_kana" => $nameKana,
-                "birthday" => $birthday,
-                "gender" => $gender,
-                "organization" => $organization,
-                "post" => $post,
-                "start_date" => $startDate,
-                "tel" => $tel,
-                "mail_address" => $mailAddress,
-            );
-            DataBase::execute($sql, $param);
 
             //コミット
             DataBase::commit();

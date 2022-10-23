@@ -57,7 +57,7 @@ declare(strict_types=1); ?>
         <?php //件数表示
         ?>
         <div id="page_area">
-            <div id="page_count"><?php echo htmlspecialchars($count["count"]); ?>件ヒットしました</div>
+            <div id="page_count"><?php echo htmlspecialchars($count); ?>件ヒットしました</div>
         </div>
 
         <div id="search_result">
@@ -77,7 +77,7 @@ declare(strict_types=1); ?>
                 <tbody>
                     <?php //件数が1件以上
                     ?>
-                    <?php if ($count["count"] >= 1) { ?>
+                    <?php if ($count >= 1) { ?>
                         <?php //社員情報取得結果を1行ずつ読込、終端まで繰り返し
                         ?>
                         <?php foreach ($data as $row) { ?>
