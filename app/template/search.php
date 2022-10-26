@@ -1,14 +1,10 @@
 <?php
 
 declare(strict_types=1); ?>
-<?php require_once(dirname(__DIR__) . "/template/header.php"); ?>
+<?php require_once(TEMPLATE_DIR . "header.php"); ?>
 
 <div class="clearfix">
-    <div id="menu">
-        <h3>メニュー</h3>
-        <div class="sub_menu">社員検索</div>
-        <div class="sub_menu"><a href="input.php">社員登録</a></div>
-    </div>
+    <?php require_once(TEMPLATE_DIR . "menu.php"); ?>
 
     <div id="main">
         <h3 id="title">社員検索画面</h3>
@@ -137,4 +133,4 @@ declare(strict_types=1); ?>
         document.delete_form.submit();
     }
 </script>
-<?php require_once(dirname(__DIR__) . "/template/footer.php"); ?>
+<?php require_once(TEMPLATE_DIR . "footer.php"); ?>

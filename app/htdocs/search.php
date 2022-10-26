@@ -70,6 +70,6 @@ $count = Users::searchCount($id, $nameKana, $gender);
 $data = Users::searchData($id, $nameKana, $gender);
 
 $title = '社員検索';
-require_once(dirname(__DIR__) . "/template/search.php");
+require_once(TEMPLATE_DIR . "search.php");
 
 ?>

@@ -2,10 +2,7 @@
 
 declare(strict_types=1);
 
-require_once(dirname(__DIR__) . "/config/config.php");
-require_once(dirname(__DIR__) . "/library/validate.php");
-require_once(dirname(__DIR__) . "/library/database.php");
-require_once(dirname(__DIR__) . "/library/users.php");
+require_once(dirname(__DIR__) . "/library/common.php");
 
 $id = '';
 $name = '';
@@ -74,7 +71,7 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
         } else {
             //エラー画面表示
             $title = "エラー";
-            require_once(dirname(__DIR__) . "/template/error.php");
+            require_once(TEMPLATE_DIR . "input.php");
             exit; //処理終了
         }
     }
@@ -212,4 +209,4 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
     }
 }
 
-require_once(dirname(__DIR__) . "/template/input.php");
+require_once(TEMPLATE_DIR . "input.php");

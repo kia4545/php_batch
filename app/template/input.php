@@ -6,10 +6,10 @@ $title = '社員登録'
 
 ?>
 
-<?php require_once(dirname(__DIR__) . "/template/header.php"); ?>
+<?php require_once(TEMPLATE_DIR . "header.php"); ?>
 
 <div class="clearfix">
-    <?php require_once(dirname(__DIR__) . "/template/menu.php"); ?>
+    <?php require_once(TEMPLATE_DIR . "menu.php"); ?>
 
     <div id="main">
         <h3 id="title">社員登録画面</h3>
@@ -106,4 +106,4 @@ $title = '社員登録'
         </div>
     </div>
 </div>
-<?php require_once(dirname(__DIR__) . "/template/footer.php"); ?>
+<?php require_once(TEMPLATE_DIR . "footer.php"); ?>
