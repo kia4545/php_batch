@@ -2,10 +2,7 @@
 
 declare(strict_types=1);
 
-require_once(dirname(__DIR__) . "/config/config.php");
-require_once(dirname(__DIR__) . "/htdocs/library/validate.php");
-require_once(dirname(__DIR__) . "/htdocs/library/database.php");
-require_once(dirname(__DIR__) . "/htdocs/library/users.php");
+require_once(dirname(__DIR__) . "/library/common.php");
 
 
 $id = '';

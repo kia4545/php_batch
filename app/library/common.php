@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-define("HOME_DIR", dirname(__DIR__) . "/");
+define("HOME_DIR", dirname(__DIR__) . '/');
 define("HTDOCS_DIR", HOME_DIR . "htdocs/");
 define("CONFIG_DIR", HOME_DIR . "config/");
 define("LIBRARY_DIR", HOME_DIR . "library/");
