@@ -5,6 +5,10 @@ declare(strict_types=1);
 require_once(dirname(__DIR__) . "/library/common.php");
 
 session_start();
+if (isset($_SESSION["id"])) {
+    header("Location: search.php");
+    exit;
+}
 
 $loginId = "";
 $password = "";
@@ -28,8 +32,11 @@ if (mb_strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
 
     if ($errorMessage === "") {
         session_regenerate_id(true);
-        
-        echo "ログイン成功";
+        $_SESSION["id"] = $loginAccount["id"];
+        $_SESSION["login_id"] = $loginAccount["login_id"];
+        $_SESSION["name"] = $loginAccount["name"];
+        header("Location: search.php");
+        exit;
     }
 
     //社員検索画面に遷移
